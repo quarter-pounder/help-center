@@ -13,24 +13,31 @@ interface GuideBodyProps {
 function normalizeBody(raw: unknown): Block[] {
     if (!raw) return [];
 
+    let blocks: unknown;
+
     if (typeof raw === "string") {
         try {
             const parsed = JSON.parse(raw);
-            return Array.isArray((parsed as any)?.blocks)
-                ? ((parsed as any).blocks as Block[])
-                : [];
-        } catch (err) {
-            console.warn("Failed to parse guide body:", err);
+            blocks = (parsed as any)?.blocks;
+        } catch {
+            console.warn("Failed to parse guide body");
             return [];
         }
+    } else if (typeof raw === "object") {
+        blocks = (raw as any).blocks;
     }
 
-    if (typeof raw === "object" && raw !== null) {
-        const blocks = (raw as any).blocks;
-        return Array.isArray(blocks) ? (blocks as Block[]) : [];
-    }
+    if (!Array.isArray(blocks)) return [];
 
-    return [];
+    // remove empty paragraph blocks
+    const filtered = (blocks as Block[]).filter((b) => {
+        if (b.type === "paragraph") {
+            return b.text.trim().length > 0;
+        }
+        return true;
+    });
+
+    return filtered;
 }
 
 const GuideBody = ({ body }: GuideBodyProps) => {
@@ -82,7 +89,6 @@ const GuideBody = ({ body }: GuideBodyProps) => {
                     return <p key={idx}>{block.text}</p>;
                 }
 
-                // unreachable if backend is correct
                 return null;
             })}
         </div>
