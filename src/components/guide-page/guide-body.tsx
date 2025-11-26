@@ -40,6 +40,15 @@ function normalizeBody(raw: unknown): Block[] {
     return filtered;
 }
 
+const headingSizes: Record<number, string> = {
+    1: "text-3xl",
+    2: "text-2xl",
+    3: "text-xl",
+    4: "text-lg",
+    5: "text-base",
+    6: "text-sm",
+};
+
 const GuideBody = ({ body }: GuideBodyProps) => {
     const blocks = normalizeBody(body);
 
@@ -52,17 +61,25 @@ const GuideBody = ({ body }: GuideBodyProps) => {
     }
 
     return (
-        <div className="max-w-none">
+        <div className="max-w-none space-y-6 text-base leading-relaxed text-gray-700 dark:text-gray-300">
             {blocks.map((block, idx) => {
                 if (block.type === "heading") {
                     const level = Math.min(6, Math.max(1, block.level));
                     const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
-                    return <Tag key={idx}>{block.text}</Tag>;
+                    const sizeClass = headingSizes[level] || headingSizes[3];
+                    return (
+                        <Tag
+                            key={idx}
+                            className={`${sizeClass} font-semibold text-gray-900 dark:text-white`}
+                        >
+                            {block.text}
+                        </Tag>
+                    );
                 }
 
                 if (block.type === "list") {
                     return (
-                        <ul key={idx} className="list-disc list-inside space-y-1">
+                        <ul key={idx} className="list-disc pl-6 space-y-2">
                             {block.items.map((item, i) => (
                                 <li key={i}>{item}</li>
                             ))}
@@ -74,11 +91,9 @@ const GuideBody = ({ body }: GuideBodyProps) => {
                     return (
                         <pre
                             key={idx}
-                            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto"
+                            className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-md overflow-x-auto text-sm text-gray-900 dark:text-gray-100"
                         >
-                            <code
-                                className={`language-${block.language} text-gray-900 dark:text-gray-100`}
-                            >
+                            <code className={`language-${block.language}`}>
                                 {block.text}
                             </code>
                         </pre>
@@ -86,7 +101,11 @@ const GuideBody = ({ body }: GuideBodyProps) => {
                 }
 
                 if (block.type === "paragraph") {
-                    return <p key={idx}>{block.text}</p>;
+                    return (
+                        <p key={idx} className="text-base">
+                            {block.text}
+                        </p>
+                    );
                 }
 
                 return null;
