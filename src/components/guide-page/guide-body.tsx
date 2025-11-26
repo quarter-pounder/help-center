@@ -10,9 +10,8 @@ interface GuideBodyProps {
     body: unknown;
 }
 
-const urlPattern = /https?:\/\/[^\s)]+/g;
-
 function renderTextWithLinks(text: string): React.ReactNode[] {
+    const urlPattern = /https?:\/\/[^\s)]+/g;
     const nodes: React.ReactNode[] = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
