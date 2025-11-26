@@ -10,6 +10,42 @@ interface GuideBodyProps {
     body: unknown;
 }
 
+const urlPattern = /https?:\/\/[^\s)]+/g;
+
+function renderTextWithLinks(text: string): React.ReactNode[] {
+    const nodes: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = urlPattern.exec(text)) !== null) {
+        const url = match[0];
+
+        if (match.index > lastIndex) {
+            nodes.push(text.slice(lastIndex, match.index));
+        }
+
+        nodes.push(
+            <a
+                key={`${url}-${match.index}`}
+                href={url}
+                className="text-blue-600 hover:underline dark:text-blue-400"
+                target="_blank"
+                rel="noreferrer"
+            >
+                {url}
+            </a>,
+        );
+
+        lastIndex = match.index + url.length;
+    }
+
+    if (lastIndex < text.length) {
+        nodes.push(text.slice(lastIndex));
+    }
+
+    return nodes.length > 0 ? nodes : [text];
+}
+
 function normalizeBody(raw: unknown): Block[] {
     if (!raw) return [];
 
@@ -103,7 +139,7 @@ const GuideBody = ({ body }: GuideBodyProps) => {
                 if (block.type === "paragraph") {
                     return (
                         <p key={idx} className="text-base">
-                            {block.text}
+                            {renderTextWithLinks(block.text)}
                         </p>
                     );
                 }
