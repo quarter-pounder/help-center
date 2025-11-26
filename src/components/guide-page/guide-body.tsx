@@ -7,32 +7,30 @@ type CodeBlock = { type: "code"; language: string; text: string };
 type Block = ParagraphBlock | HeadingBlock | ListBlock | CodeBlock;
 
 interface GuideBodyProps {
-    body: unknown; // raw JSON from backend
+    body: unknown;
 }
 
 function normalizeBody(raw: unknown): Block[] {
     if (!raw) return [];
 
-    try {
-        // If backend accidentally sends a string, parse it
-        if (typeof raw === "string") {
+    if (typeof raw === "string") {
+        try {
             const parsed = JSON.parse(raw);
-            if (parsed?.blocks) return parsed.blocks as Block[];
-            return [{ type: "paragraph", text: raw }];
+            return Array.isArray((parsed as any)?.blocks)
+                ? ((parsed as any).blocks as Block[])
+                : [];
+        } catch (err) {
+            console.warn("Failed to parse guide body:", err);
+            return [];
         }
-
-        // Handle already-parsed object
-        if (typeof raw === "object") {
-            if ("blocks" in (raw as any)) {
-                return (raw as any).blocks as Block[];
-            }
-        }
-    } catch (err) {
-        console.warn("Failed to parse guide body:", err);
-        return [{ type: "paragraph", text: String(raw) }];
     }
 
-    return [{ type: "paragraph", text: JSON.stringify(raw) }];
+    if (typeof raw === "object" && raw !== null) {
+        const blocks = (raw as any).blocks;
+        return Array.isArray(blocks) ? (blocks as Block[]) : [];
+    }
+
+    return [];
 }
 
 const GuideBody = ({ body }: GuideBodyProps) => {
@@ -50,26 +48,42 @@ const GuideBody = ({ body }: GuideBodyProps) => {
         <div className="max-w-none">
             {blocks.map((block, idx) => {
                 if (block.type === "heading") {
-                    const Tag = `h${block.level}` as keyof React.JSX.IntrinsicElements;
+                    const level = Math.min(6, Math.max(1, block.level));
+                    const Tag = `h${level}` as keyof JSX.IntrinsicElements;
                     return <Tag key={idx}>{block.text}</Tag>;
                 }
+
                 if (block.type === "list") {
                     return (
                         <ul key={idx} className="list-disc list-inside space-y-1">
-                            {block.items.map((item, itemIdx) => (
-                                <li key={itemIdx}>{item}</li>
+                            {block.items.map((item, i) => (
+                                <li key={i}>{item}</li>
                             ))}
                         </ul>
                     );
                 }
+
                 if (block.type === "code") {
                     return (
-                        <pre key={idx} className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto">
-                            <code className={`language-${block.language} text-gray-900 dark:text-gray-100`}>{block.text}</code>
+                        <pre
+                            key={idx}
+                            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto"
+                        >
+                            <code
+                                className={`language-${block.language} text-gray-900 dark:text-gray-100`}
+                            >
+                                {block.text}
+                            </code>
                         </pre>
                     );
                 }
-                return <p key={idx}>{block.text}</p>;
+
+                if (block.type === "paragraph") {
+                    return <p key={idx}>{block.text}</p>;
+                }
+
+                // unreachable if backend is correct
+                return null;
             })}
         </div>
     );
