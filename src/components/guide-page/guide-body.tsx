@@ -49,7 +49,7 @@ const GuideBody = ({ body }: GuideBodyProps) => {
             {blocks.map((block, idx) => {
                 if (block.type === "heading") {
                     const level = Math.min(6, Math.max(1, block.level));
-                    const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+                    const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
                     return <Tag key={idx}>{block.text}</Tag>;
                 }
 
