@@ -124,7 +124,7 @@ export default function MobileNavDrawer() {
                     <SheetHeader className="sr-only">
                         <SheetTitle>Navigation Menu</SheetTitle>
                         <SheetDescription>
-                            Navigate through the user guides and FAQs.
+                            Navigate through the guides and FAQs.
                         </SheetDescription>
                     </SheetHeader>
                 </SheetContent>
